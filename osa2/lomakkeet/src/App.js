@@ -6,6 +6,8 @@ const App = () => {
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState("")
   const [newFilter, setNewFilter] = useState("")
+  const [message, setMessage] = useState("")
+  const [messageType, setMessageType] = useState("neutral")
 
   //GET USERS
   useEffect(() => {
@@ -45,6 +47,29 @@ const App = () => {
           //reset input fields
           setNewName("")
           setNewNumber("")
+
+          //notifcation
+          setMessage(`Changed number of ${personObject.name}`)
+          setMessageType("success")
+          setTimeout(() => {
+            setMessageType("neutral")
+          }, 3000)
+          console.log("message: ", message)
+        })
+        .catch(error => {
+          console.log("catched error: ", error)
+          setPersons(persons.filter(person => person.id !== foundPerson.id))
+
+          //change notification
+          setMessage(`Information of ${personObject.name} has already been removed from server`)
+          setMessageType("failure")
+
+          setTimeout(() => {
+            setMessageType("neutral")
+          }, 3000)
+          //reset input fields
+          setNewName("")
+          setNewNumber("")
         })
       }
       else{
@@ -68,6 +93,14 @@ const App = () => {
             //reset input fields
             setNewName("")
             setNewNumber("")
+
+            //notifcation
+            setMessage(`Added ${personObject.name}`)
+            setMessageType("success")
+            setTimeout(() => {
+              setMessageType("neutral")
+            }, 3000)
+            console.log("message: ", message)
           })
     }
   }
@@ -82,6 +115,17 @@ const App = () => {
           console.log("new arr: ", newArray)
           personService
             .deleteUser(personFound.id)
+            .then(response => {
+              //notifcation
+              setMessage(`Deleted ${personFound.name}`)
+              setMessageType("success")
+              setTimeout(() => {
+                setMessageType("neutral")
+              }, 3000)
+              console.log("message: ", message)
+              console.log(response)
+            }
+            )
           setPersons(newArray)
         }
     }
@@ -102,6 +146,8 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={message}
+                    messageType={messageType} />
       <Filter newFilter={newFilter}
               handleFilterChange={handleFilterChange}/>
       <h3>add a new</h3>
@@ -114,6 +160,35 @@ const App = () => {
     </div>
   )
 
+}
+
+const Notification = ({message, messageType}) => {
+  if(message === null){
+    return null
+  }
+
+  console.log("Notification component called with message: ", message)
+  console.log("Message type is: ", messageType)
+
+  if(messageType === "success"){
+    return (
+      <div className="successNotification">
+        {message}
+      </div>
+    )
+  }
+  if(messageType === "failure"){
+    return (
+      <div className="failureNotification">
+        {message}
+      </div>
+    )
+  }
+  if(messageType === "neutral"){
+    return (
+      <div></div>
+    )
+  }
 }
 
 const Filter = (props) => {

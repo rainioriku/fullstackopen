@@ -2,7 +2,7 @@
   "persons": [
     {
       "name": "Arto Hellas",
-      "number": "040-123458",
+      "number": "040-123459",
       "id": 1
     },
     {
@@ -19,6 +19,16 @@
       "name": "Mary Poppendieck",
       "number": "39-23-6423122",
       "id": 4
+    },
+    {
+      "name": "Riku Rainio",
+      "number": "050-4000405",
+      "id": 5
+    },
+    {
+      "name": "Testi Tyyppi",
+      "number": "050-26212",
+      "id": 6
     }
   ]
 }
