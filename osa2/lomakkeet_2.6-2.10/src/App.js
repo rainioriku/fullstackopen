@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import axios from "axios"
+import personService from "./services/persons"
 
 const App = () => {
   const [persons, setPersons] = useState([])
@@ -7,13 +7,13 @@ const App = () => {
   const [newNumber, setNewNumber] = useState("")
   const [newFilter, setNewFilter] = useState("")
 
+  //GET USERS
   useEffect(() => {
-    axios
-      .get("http://localhost:3001/persons")
-      .then(response => {
-        console.log("response: ", response.data)
-        setPersons(response.data)
-      })
+    personService
+      .getUsers()
+        .then(persons => {
+          setPersons(persons)
+        })
   },[])
 
   const addPerson = (event) => {
@@ -24,36 +24,81 @@ const App = () => {
     }
 
     const copy = persons.map(elem => elem)
-    const foundName = copy.find(person => person.name === newName)
+    const foundPerson = copy.find(person => person.name === newName)
     const foundNumber = copy.find(person => person.number === newNumber)
 
-    if(foundName){
-      window.alert(`${newName} is already added to phonebook`)
+    //Check if person with given name or number already exists
+    if(foundPerson && foundPerson.number !== personObject.number){
+      const answer = window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)
+      
+      if(answer){
+        personService
+        .updateUser(personObject, foundPerson.id)
+        .then(response => {
+          console.log("response : ", response)
+          const copy = [...persons]
+          const index = persons.indexOf(foundPerson)
+          copy[index].number = newNumber
+
+          setPersons(copy)
+
+          //reset input fields
+          setNewName("")
+          setNewNumber("")
+        })
+      }
+      else{
+        //reset input fields
+        setNewName("")
+        setNewNumber("")
+      }
+      
     }
     if(foundNumber){
       window.alert(`${newNumber} is already added to phonebook`)
     }
-    else{
-      setPersons(persons.concat(personObject))
-      setNewName("")
-      setNewNumber("")
+    if(!(foundPerson)){
+      //UPDATE STATE ONLY IF Promise resolves!
+      personService
+        .addUser(personObject)
+          .then(addedPerson => {
+            //concat creates copy!
+            setPersons(persons.concat(addedPerson))
+            
+            //reset input fields
+            setNewName("")
+            setNewNumber("")
+          })
+    }
+  }
+
+  const deletePerson = (personName) => {
+    if(window.confirm(`Delete ${personName} ?`)){
+      let personFound = persons.find(person => person.name === personName)
+        if(personFound){
+          const newArray = persons.filter(person => {
+            return person !== personFound
+          })
+          console.log("new arr: ", newArray)
+          personService
+            .deleteUser(personFound.id)
+          setPersons(newArray)
+        }
     }
   }
 
   const handleNameChange = (event) => {
-    console.group(event.target.value)
     setNewName(event.target.value)
   }
 
   const handleNumberChange = (event) => {
-    console.group(event.target.value)
     setNewNumber(event.target.value)
   }
 
   const handleFilterChange = (event) => {
-    console.group(event.target.value)
     setNewFilter(event.target.value)
   }
+
   return (
     <div>
       <h2>Phonebook</h2>
@@ -65,7 +110,7 @@ const App = () => {
                   newNumber={newNumber}
                   handleNumberChange={handleNumberChange}
                   addPerson={addPerson}/>
-      <Numbers persons={persons} filter={newFilter}/>
+      <Numbers persons={persons} onDeleteButton={deletePerson} filter={newFilter}/>
     </div>
   )
 
@@ -105,18 +150,24 @@ const PersonForm = (props) => {
 }
 
 const Numbers = (props) => {
-  let persons = props.persons
+  const persons = props.persons
   let filteredPersons = persons.filter(person =>
     person.name.toLowerCase().includes(props.filter.toLowerCase()))
 
   return (
     <div>
     <h2>Numbers</h2>
-      {filteredPersons.map(person =>
+      <div>
+        {filteredPersons.map(person =>
         <p key={person.name}>
-            {person.name} {person.number}
+            <p>{person.name} {person.number}
+              <button onClick={() => props.onDeleteButton(person.name)}>delete</button>
+            </p>
+            
         </p>
       )}
+      </div>
+      
   </div>
   )
 }
